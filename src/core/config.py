@@ -4,9 +4,8 @@ Lab 11 — Configuration, provider selection, API keys.
 Hai tầng model (không trộn):
 
   Blue Team (CP2–CP3, guardrails / pipeline / protected agent)
-    → CỐ ĐỊNH OpenRouter ``liquid/lfm-3-1.7b:free``
-       https://openrouter.ai/liquid/lfm-3-1.7b:free
-    → Cần ``OPENROUTER_API_KEY``
+    → BLUE_PROVIDER=gemini (GOOGLE_API_KEY), hoặc openrouter
+    → BLUE_MODEL chọn model riêng cho Blue
 
   Red Team (CP4)
     → Chọn một provider: OpenAI hoặc Gemini
@@ -34,11 +33,12 @@ PROVIDER_OPENAI = "openai"
 PROVIDER_GEMINI = "gemini"
 PROVIDER_OPENROUTER = "openrouter"
 
-# --- Blue Team (LOCKED) ---
-BLUE_PROVIDER = PROVIDER_OPENROUTER
-BLUE_MODEL = "liquid/lfm-3-1.7b:free"
+# --- Blue Team (local provider override requested by the student) ---
+BLUE_PROVIDER = PROVIDER_GEMINI
+BLUE_MODEL = "gemini-3.5-flash"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
-DEFAULT_OPENROUTER_MODEL = BLUE_MODEL  # alias
+GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+DEFAULT_OPENROUTER_MODEL = "liquid/lfm-3-1.7b:free"
 
 # --- Red Team ---
 DEFAULT_OPENAI_MODEL = "gpt-4o-mini"
@@ -96,16 +96,22 @@ except FileNotFoundError:
 
 
 # ---------------------------------------------------------------------------
-# Blue Team — fixed OpenRouter Liquid
+# Blue Team — Gemini or OpenRouter through the OpenAI-compatible API
 # ---------------------------------------------------------------------------
 
 def get_blue_provider() -> str:
-    return BLUE_PROVIDER
+    provider = os.environ.get("BLUE_PROVIDER", BLUE_PROVIDER).strip().lower()
+    if provider not in {PROVIDER_GEMINI, PROVIDER_OPENROUTER}:
+        raise ValueError("BLUE_PROVIDER must be gemini or openrouter")
+    return provider
 
 
 def get_blue_model() -> str:
-    # Hard-locked; env cannot override for the graded Blue Team path.
-    return BLUE_MODEL
+    default = (
+        os.environ.get("GEMINI_MODEL", BLUE_MODEL).strip() or BLUE_MODEL
+        if get_blue_provider() == PROVIDER_GEMINI else DEFAULT_OPENROUTER_MODEL
+    )
+    return os.environ.get("BLUE_MODEL", "").strip() or default
 
 
 def get_openrouter_api_key() -> str:
@@ -113,7 +119,12 @@ def get_openrouter_api_key() -> str:
 
 
 def blue_client_kwargs() -> dict:
-    """OpenAI SDK kwargs pointing at OpenRouter (Blue Team only)."""
+    """Keep the existing plugin runtime while selecting the Blue API endpoint."""
+    if get_blue_provider() == PROVIDER_GEMINI:
+        return {
+            "api_key": os.environ.get("GOOGLE_API_KEY", "").strip() or None,
+            "base_url": GEMINI_OPENAI_BASE_URL,
+        }
     return {
         "api_key": get_openrouter_api_key() or None,
         "base_url": (
@@ -170,6 +181,11 @@ def get_openai_api_key() -> str:
 
 
 def red_openai_client_kwargs() -> dict:
+    if get_red_provider() == PROVIDER_GEMINI:
+        return {
+            "api_key": os.environ.get("GOOGLE_API_KEY", "").strip() or None,
+            "base_url": GEMINI_OPENAI_BASE_URL,
+        }
     return {"api_key": get_openai_api_key() or None}
 
 
@@ -180,7 +196,10 @@ def red_provider_label(tier: str = "advance") -> str:
 
 
 def red_uses_openai_sdk() -> bool:
-    return get_red_provider() == PROVIDER_OPENAI
+    return get_red_provider() == PROVIDER_OPENAI or (
+        get_red_provider() == PROVIDER_GEMINI
+        and os.environ.get("GEMINI_RUNTIME", "adk").strip().lower() == "compatible"
+    )
 
 
 def red_uses_gemini() -> bool:
@@ -235,12 +254,11 @@ def is_harder_model() -> bool:
 
 
 def setup_api_key():
-    """Ensure keys for Blue (OpenRouter) + Red / Red Advance (OpenAI or Gemini)."""
-    if not get_openrouter_api_key():
-        os.environ["OPENROUTER_API_KEY"] = input(
-            "Enter OpenRouter API Key (Blue): "
-        ).strip()
-    print(f"Blue  — {blue_provider_label()}  [LOCKED]")
+    """Ensure the keys required by the selected Blue and Red providers."""
+    blue_key = "GOOGLE_API_KEY" if get_blue_provider() == PROVIDER_GEMINI else "OPENROUTER_API_KEY"
+    if not os.environ.get(blue_key, "").strip():
+        os.environ[blue_key] = input(f"Enter {blue_key} (Blue): ").strip()
+    print(f"Blue  — {blue_provider_label()}")
 
     red = get_red_provider()
     model = get_red_model()

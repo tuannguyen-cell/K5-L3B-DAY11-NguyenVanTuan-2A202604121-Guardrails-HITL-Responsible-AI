@@ -1,5 +1,34 @@
 # Day 11 — Controlled Agent Security (2026)
 
+**Học viên:** Nguyễn Văn Tuấn · **MSSV:** 2A202604121 · **Lớp:** K5-L3B.
+
+Chạy từ gốc repo sau khi kích hoạt `.venv` và điền key trong `.env`:
+
+```powershell
+python src/main.py --part 2
+python src/main.py --part 3
+python src/main.py --part 4
+python -m pytest tests/smoke -q
+python -m pytest tests/public -q
+python scripts/grade.py --submission-dir . --out outputs/grade_report.json
+```
+
+Kết quả chạy nằm trong `outputs/`. Báo cáo `grade_report.json` và `lab_report.md`
+được sinh bằng script tự chấm; không chỉnh sửa kết quả JSON hay báo cáo bằng tay.
+
+> **Cấu hình local đã đổi theo yêu cầu:** Blue (CP2–CP3) dùng Gemini trực tiếp qua
+> endpoint OpenAI-compatible của Google, với `BLUE_PROVIDER=gemini`, `BLUE_MODEL=gemini-3.5-flash-lite`
+> và `GOOGLE_API_KEY` trong `.env`. Các plugin input/output, rate limit và audit
+> vẫn chạy. Đây là thay đổi so với yêu cầu OpenRouter cố định của starter bên dưới;
+> cần xác nhận với giảng viên trước khi nộp. Để khôi phục cấu hình gốc, đặt
+> `BLUE_PROVIDER=openrouter`, `BLUE_MODEL=liquid/lfm-3-1.7b:free`.
+>
+> CP4 local dùng `GEMINI_MODEL=gemini-3.5-flash-lite`, `GEMINI_RUNTIME=compatible`
+> để Red và Red Advance gọi cùng endpoint Google với Blue/NeMo. Đặt
+> `GEMINI_RUNTIME=adk` để dùng Google ADK như starter. Red Advance vẫn giữ đủ
+> regex input/output và NeMo input/output rails. Model local khác model mặc định
+> `gemini-3.5-flash` của rubric; file kết quả khai đúng model thực tế.
+
 > 👤 **Hình thức:** bài tập **cá nhân** (1 người / 1 MSSV).  
 > 🎯 **Mục tiêu:** đóng vai **Blue Team** để học cách xây Guardrails phòng thủ, rồi đóng vai **Red Team** để tấn công agent **Red** hoặc **Red Advance**.  
 > ✅ Làm theo **Checkpoint 1 → 5** trong [`CHECKPOINTS.md`](CHECKPOINTS.md) · nộp theo [`SUBMISSION.md`](SUBMISSION.md).

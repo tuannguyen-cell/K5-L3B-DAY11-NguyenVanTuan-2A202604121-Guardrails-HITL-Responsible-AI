@@ -1,7 +1,7 @@
 """
 OpenAI SDK runtime — dùng cho:
 
-  Blue Team → OpenRouter liquid/lfm-3-1.7b:free (create_blue_pair)
+  Blue Team → Gemini or OpenRouter, selected by BLUE_PROVIDER (create_blue_pair)
   Red Team  → OpenAI gpt-4o-mini (create_openai_pair) khi RED_TEAM_PROVIDER=openai
 
 Gemini Red Team dùng Google ADK trong agents/*.py — không đi qua file này.
@@ -51,13 +51,13 @@ class OpenAIRunner:
 
         return OpenAI(**(self.client_kwargs or {}))
 
-    async def chat(self, agent: OpenAIAgent, user_message: str) -> str:
+    async def chat(self, agent: OpenAIAgent, user_message: str, *, user_id: str = "student") -> str:
         for hook in self.input_hooks:
             blocked = hook(user_message)
             if blocked:
                 return blocked
 
-        block_msg = await self._run_input_plugins(user_message)
+        block_msg = await self._run_input_plugins(user_message, user_id=user_id)
         if block_msg is not None:
             return block_msg
 
@@ -78,7 +78,7 @@ class OpenAIRunner:
         text = await self._run_output_plugins(text)
         return text
 
-    async def _run_input_plugins(self, user_message: str) -> str | None:
+    async def _run_input_plugins(self, user_message: str, *, user_id: str = "student") -> str | None:
         if not self.plugins:
             return None
         try:
@@ -90,7 +90,7 @@ class OpenAIRunner:
             role="user",
             parts=[types.Part.from_text(text=user_message)],
         )
-        ctx = _MockInvocationContext()
+        ctx = _MockInvocationContext(user_id=user_id)
         for plugin in self.plugins:
             cb = getattr(plugin, "on_user_message_callback", None)
             if cb is None:
@@ -191,7 +191,7 @@ def create_blue_pair(
     output_hooks: list | None = None,
     temperature: float = 0.4,
 ) -> tuple[OpenAIAgent, OpenAIRunner]:
-    """Blue Team — always OpenRouter liquid/lfm-3-1.7b:free."""
+    """Blue Team — selected endpoint, with the same input/output plugins."""
     return _make_pair(
         name=name,
         instruction=instruction,

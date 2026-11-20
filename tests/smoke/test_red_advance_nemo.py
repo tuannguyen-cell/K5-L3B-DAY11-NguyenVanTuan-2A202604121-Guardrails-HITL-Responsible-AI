@@ -204,6 +204,7 @@ def test_red_advance_plugin_layers(runtime, prompt, reply, nemo_replies, expecte
 
 @pytest.mark.parametrize("provider", ["openai", "gemini"])
 def test_factory_wires_nemo_into_red_advance(provider, monkeypatch):
+    monkeypatch.setenv("GEMINI_RUNTIME", "adk")
     monkeypatch.setenv("RED_TEAM_PROVIDER", provider)
     monkeypatch.setenv("OPENAI_API_KEY", "sk-test-dummy")
     monkeypatch.setenv("GOOGLE_API_KEY", "test-dummy")
