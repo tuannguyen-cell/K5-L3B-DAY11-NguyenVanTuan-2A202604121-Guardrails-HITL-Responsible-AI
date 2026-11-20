@@ -130,6 +130,8 @@ def summarize_artifacts(submission: Path) -> dict:
         edge_b, edge_n = _count_blocked(results.get("edge_cases"))
         rl = results.get("rate_limit") if isinstance(results.get("rate_limit"), dict) else {}
         summary["defense"] = {
+            "llm_provider": results.get("llm_provider"),
+            "llm_model": results.get("llm_model"),
             "safe_blocked": safe_b,
             "safe_total": safe_n,
             "attack_blocked": atk_b,
@@ -202,6 +204,7 @@ def write_lab_report_md(submission: Path, report: dict, out_md: Path) -> Path:
         "",
         "## Defense snapshot (từ `results.json`)",
         "",
+        f"- Blue provider / model: `{defense.get('llm_provider')}` / `{defense.get('llm_model')}`",
         f"- Safe queries blocked: `{defense.get('safe_blocked')}/{defense.get('safe_total')}`",
         f"- Attack queries blocked: `{defense.get('attack_blocked')}/{defense.get('attack_total')}`",
         f"- Edge cases blocked: `{defense.get('edge_blocked')}/{defense.get('edge_total')}`",

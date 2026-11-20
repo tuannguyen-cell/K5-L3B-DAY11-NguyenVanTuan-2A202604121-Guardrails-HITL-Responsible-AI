@@ -4,7 +4,7 @@ Lab 11 — Configuration, provider selection, API keys.
 Hai tầng model (không trộn):
 
   Blue Team (CP2–CP3, guardrails / pipeline / protected agent)
-    → BLUE_PROVIDER=gemini (GOOGLE_API_KEY), hoặc openrouter
+    → BLUE_PROVIDER=liquid (LIQUID_API_KEY), gemini (GOOGLE_API_KEY), hoặc openrouter
     → BLUE_MODEL chọn model riêng cho Blue
 
   Red Team (CP4)
@@ -32,12 +32,15 @@ except ImportError:
 PROVIDER_OPENAI = "openai"
 PROVIDER_GEMINI = "gemini"
 PROVIDER_OPENROUTER = "openrouter"
+PROVIDER_LIQUID = "liquid"
 
 # --- Blue Team (local provider override requested by the student) ---
 BLUE_PROVIDER = PROVIDER_GEMINI
 BLUE_MODEL = "gemini-3.5-flash"
 OPENROUTER_BASE_URL = "https://openrouter.ai/api/v1"
 GEMINI_OPENAI_BASE_URL = "https://generativelanguage.googleapis.com/v1beta/openai/"
+LIQUID_BASE_URL = "https://api.liquid.ai/openai/v1"
+DEFAULT_LIQUID_MODEL = "lfm3-1.7b"
 DEFAULT_OPENROUTER_MODEL = "liquid/lfm-3-1.7b:free"
 
 # --- Red Team ---
@@ -96,21 +99,24 @@ except FileNotFoundError:
 
 
 # ---------------------------------------------------------------------------
-# Blue Team — Gemini or OpenRouter through the OpenAI-compatible API
+# Blue Team — Liquid, Gemini or OpenRouter through the OpenAI-compatible API
 # ---------------------------------------------------------------------------
 
 def get_blue_provider() -> str:
     provider = os.environ.get("BLUE_PROVIDER", BLUE_PROVIDER).strip().lower()
-    if provider not in {PROVIDER_GEMINI, PROVIDER_OPENROUTER}:
-        raise ValueError("BLUE_PROVIDER must be gemini or openrouter")
+    if provider not in {PROVIDER_GEMINI, PROVIDER_OPENROUTER, PROVIDER_LIQUID}:
+        raise ValueError("BLUE_PROVIDER must be gemini, openrouter or liquid")
     return provider
 
 
 def get_blue_model() -> str:
-    default = (
-        os.environ.get("GEMINI_MODEL", BLUE_MODEL).strip() or BLUE_MODEL
-        if get_blue_provider() == PROVIDER_GEMINI else DEFAULT_OPENROUTER_MODEL
-    )
+    provider = get_blue_provider()
+    if provider == PROVIDER_GEMINI:
+        default = os.environ.get("GEMINI_MODEL", BLUE_MODEL).strip() or BLUE_MODEL
+    elif provider == PROVIDER_LIQUID:
+        default = DEFAULT_LIQUID_MODEL
+    else:
+        default = DEFAULT_OPENROUTER_MODEL
     return os.environ.get("BLUE_MODEL", "").strip() or default
 
 
@@ -120,6 +126,11 @@ def get_openrouter_api_key() -> str:
 
 def blue_client_kwargs() -> dict:
     """Keep the existing plugin runtime while selecting the Blue API endpoint."""
+    if get_blue_provider() == PROVIDER_LIQUID:
+        return {
+            "api_key": os.environ.get("LIQUID_API_KEY", "").strip() or None,
+            "base_url": LIQUID_BASE_URL,
+        }
     if get_blue_provider() == PROVIDER_GEMINI:
         return {
             "api_key": os.environ.get("GOOGLE_API_KEY", "").strip() or None,
@@ -255,7 +266,10 @@ def is_harder_model() -> bool:
 
 def setup_api_key():
     """Ensure the keys required by the selected Blue and Red providers."""
-    blue_key = "GOOGLE_API_KEY" if get_blue_provider() == PROVIDER_GEMINI else "OPENROUTER_API_KEY"
+    blue_key = {
+        PROVIDER_GEMINI: "GOOGLE_API_KEY", PROVIDER_LIQUID: "LIQUID_API_KEY",
+        PROVIDER_OPENROUTER: "OPENROUTER_API_KEY",
+    }[get_blue_provider()]
     if not os.environ.get(blue_key, "").strip():
         os.environ[blue_key] = input(f"Enter {blue_key} (Blue): ").strip()
     print(f"Blue  — {blue_provider_label()}")

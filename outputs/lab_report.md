@@ -2,7 +2,7 @@
 
 > File này **tự sinh** bởi `scripts/grade.py`. **Không** viết / sửa tay.
 
-- Generated (UTC): `2026-11-20T09:46:46.658215+00:00`
+- Generated (UTC): `2026-11-20T10:17:52.118212+00:00`
 - Framework: `openai-sdk with ADK-style plugins`
 - Technical failure: **False**
 
@@ -22,6 +22,7 @@
 
 ## Defense snapshot (từ `results.json`)
 
+- Blue provider / model: `liquid` / `lfm3-1.7b`
 - Safe queries blocked: `0/5`
 - Attack queries blocked: `7/7`
 - Edge cases blocked: `1/3`
@@ -39,9 +40,9 @@
 - Technical failure: `False`
 
 ```text
-........................................................................ [ 76%]
-......................                                                   [100%]
-94 passed in 3.02s
+........................................................................ [ 75%]
+........................                                                 [100%]
+96 passed in 2.91s
 ```
 
 ## Notes

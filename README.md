@@ -16,15 +16,15 @@ python scripts/grade.py --submission-dir . --out outputs/grade_report.json
 Kết quả chạy nằm trong `outputs/`. Báo cáo `grade_report.json` và `lab_report.md`
 được sinh bằng script tự chấm; không chỉnh sửa kết quả JSON hay báo cáo bằng tay.
 
-> **Cấu hình local đã đổi theo yêu cầu:** Blue (CP2–CP3) dùng Gemini trực tiếp qua
-> endpoint OpenAI-compatible của Google, với `BLUE_PROVIDER=gemini`, `BLUE_MODEL=gemini-3.5-flash-lite`
-> và `GOOGLE_API_KEY` trong `.env`. Các plugin input/output, rate limit và audit
-> vẫn chạy. Đây là thay đổi so với yêu cầu OpenRouter cố định của starter bên dưới;
-> cần xác nhận với giảng viên trước khi nộp. Để khôi phục cấu hình gốc, đặt
+> **Cấu hình hiện tại:** Blue (CP2–CP3) dùng Liquid trực tiếp, với
+> `BLUE_PROVIDER=liquid`, `BLUE_MODEL=lfm3-1.7b`, `LIQUID_API_KEY` trong `.env`.
+> Endpoint: `https://api.liquid.ai/openai/v1` ([tài liệu Liquid](https://docs.liquid.ai/api/overview)).
+> Theo học viên, giảng viên đã đồng ý dùng Liquid trực tiếp thay OpenRouter.
+> Các plugin input/output, rate limit và audit vẫn chạy. Để khôi phục cấu hình gốc, đặt
 > `BLUE_PROVIDER=openrouter`, `BLUE_MODEL=liquid/lfm-3-1.7b:free`.
 >
 > CP4 local dùng `GEMINI_MODEL=gemini-3.5-flash-lite`, `GEMINI_RUNTIME=compatible`
-> để Red và Red Advance gọi cùng endpoint Google với Blue/NeMo. Đặt
+> để Red và Red Advance gọi Google; NeMo dùng cùng model/key Red. Đặt
 > `GEMINI_RUNTIME=adk` để dùng Google ADK như starter. Red Advance vẫn giữ đủ
 > regex input/output và NeMo input/output rails. Model local khác model mặc định
 > `gemini-3.5-flash` của rubric; file kết quả khai đúng model thực tế.

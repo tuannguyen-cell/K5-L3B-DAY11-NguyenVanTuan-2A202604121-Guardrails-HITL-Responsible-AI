@@ -27,7 +27,7 @@ def _provider_error_message(error: Exception) -> str:
 
     prefix = "Blue API call failed. "
     provider = get_blue_provider()
-    key_name = "GOOGLE_API_KEY" if provider == "gemini" else "OPENROUTER_API_KEY"
+    key_name = {"gemini": "GOOGLE_API_KEY", "liquid": "LIQUID_API_KEY", "openrouter": "OPENROUTER_API_KEY"}[provider]
     if isinstance(error, APITimeoutError):
         return prefix + "Request timed out. Check network connectivity and retry."
     if isinstance(error, APIConnectionError):
